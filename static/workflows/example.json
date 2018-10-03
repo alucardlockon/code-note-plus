@@ -1,0 +1,15 @@
+{
+  "name" : "示例程序",
+  "steps" : [
+    {
+      "name" : "读取模板",
+      "type" : "read-model",
+      "target" : "model-1"
+    },
+    {
+      "name" : "生成代码",
+      "type" : "gen-code",
+      "target" : "model-1"
+    }
+  ]
+}

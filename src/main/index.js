@@ -1,6 +1,8 @@
 'use strict'
 
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, TouchBar } from 'electron'
+import fs from 'fs'
+import path from 'path'
 
 /**
  * Set `__static` path to static files in production
@@ -20,9 +22,9 @@ function createWindow () {
    * Initial window options
    */
   mainWindow = new BrowserWindow({
-    height: 563,
+    height: 650,
     useContentSize: true,
-    width: 1000
+    width: 1300
   })
 
   mainWindow.loadURL(winURL)
@@ -46,22 +48,61 @@ app.on('activate', () => {
   }
 })
 
-/**
- * Auto Updater
- *
- * Uncomment the following code below and install `electron-updater` to
- * support auto updating. Code Signing with a valid certificate is required.
- * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-electron-builder.html#auto-updating
- */
-
-/*
-import { autoUpdater } from 'electron-updater'
-
-autoUpdater.on('update-downloaded', () => {
-  autoUpdater.quitAndInstall()
-})
-
 app.on('ready', () => {
-  if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
+  // 初始化文件夹
+  const workflowDir = path.join(app.getPath('userData'), '/workflows')
+  if (!fsExistsSync(workflowDir)) {
+    fs.mkdir(workflowDir)
+  }
+
+  // 初始化touchbar
+  const {TouchBarButton} = TouchBar
+
+  const touchBar = new TouchBar([
+    new TouchBarButton({
+      label: '工作流',
+      click: changeTab,
+      tabName: 'workflow'
+    }),
+    new TouchBarButton({
+      label: '笔记',
+      click: changeTab,
+      tabName: 'note'
+    }),
+    new TouchBarButton({
+      label: 'Web应用',
+      click: changeTab,
+      tabName: 'webapp'
+    }),
+    new TouchBarButton({
+      label: 'API文档',
+      click: changeTab,
+      tabName: 'apidoc'
+    }),
+    new TouchBarButton({
+      label: '代码片段',
+      click: changeTab,
+      tabName: 'snippets'
+    }),
+    new TouchBarButton({
+      label: '设置',
+      click: changeTab,
+      tabName: 'config'
+    })
+  ])
+
+  mainWindow.setTouchBar(touchBar)
 })
- */
+
+function fsExistsSync (path) {
+  try {
+    fs.accessSync(path, fs.F_OK)
+  } catch (e) {
+    return false
+  }
+  return true
+}
+
+function changeTab () {
+  mainWindow.webContents.send('change-tab', this.tabName)
+}
