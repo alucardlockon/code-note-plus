@@ -1,9 +1,9 @@
 <template>
     <div>
         <h1>Welcome to CodeNotePlus</h1>
-        <el-tabs v-model="activeName" type="border-card">
-            <el-tab-pane label="工作流" name="workflow">
-                <workflow :height="300"></workflow>
+        <el-tabs v-model="activeName" type="border-card" style="height: 550px">
+            <el-tab-pane label="工作流" name="workflow" >
+                <workflow></workflow>
             </el-tab-pane>
             <el-tab-pane label="笔记" name="note">笔记</el-tab-pane>
             <el-tab-pane label="Web应用" name="webapp">Web应用</el-tab-pane>
