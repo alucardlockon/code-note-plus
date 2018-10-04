@@ -25,17 +25,27 @@
             </div>
         </el-aside>
         <el-main>
-            work-flows
+            <workflow-view :data="fileContent" ref="workflowview" @item-click="viewItemClick"></workflow-view>
         </el-main>
         <el-aside width="200px">
-            <el-card class="box-card">
-                <div slot="header" class="clearfix">
-                    <span>属性</span>
-                </div>
-                <div class="text item" style="height: 380px">
+            <el-collapse v-model="activeNames">
+                <el-collapse-item title="文件属性" name="1">
                     <tree-view :data="fileContent" :options="{maxDepth: 3,modifiable: true}"></tree-view>
-                </div>
-            </el-card>
+                </el-collapse-item>
+                <el-collapse-item title="基本属性" name="2">
+                    <el-form>
+                        <el-form-item label="名称">
+                            <el-input v-model="selection.name"></el-input>
+                        </el-form-item>
+                        <el-form-item label="类型">
+                            <el-input v-model="selection.type"></el-input>
+                        </el-form-item>
+                    </el-form>
+                </el-collapse-item>
+                <el-collapse-item title="步骤参数" name="3">
+                    <router-view></router-view>
+                </el-collapse-item>
+            </el-collapse>
         </el-aside>
     </el-container>
 </template>
@@ -43,15 +53,22 @@
 <script>
   import fs from 'fs'
   import _ from 'lodash'
+  import workflowView from './WorkflowView'
   export default {
     name: 'workflow',
+    components: {workflowView},
+    data () {
+      return {
+        fileContent: {},
+        filterText: '',
+        treebarData: [],
+        treeSel: '',
+        activeNames: ['2', '3'],
+        selection: {}
+      }
+    },
     created () {
       this.loadFolder()
-    },
-    watch: {
-      filterText (val) {
-        this.$refs.treebar.filter(val)
-      }
     },
     methods: {
       filterNode (value, data) {
@@ -80,14 +97,14 @@
         } else {
           this.$message('请选择文件')
         }
+      },
+      viewItemClick (step) {
+        this.selection = step
       }
     },
-    data () {
-      return {
-        fileContent: {},
-        filterText: '',
-        treebarData: [],
-        treeSel: ''
+    watch: {
+      filterText (val) {
+        this.$refs.treebar.filter(val)
       }
     }
   }

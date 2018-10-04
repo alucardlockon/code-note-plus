@@ -8,7 +8,12 @@ export default new Router({
     {
       path: '/',
       name: 'landing-page',
-      component: require('@/components/MainPage').default
+      component: require('@/components/MainPage').default,
+      children: [
+        { path: '', component: require('@/components/workflow/steps/Mysql').default },
+        { path: 'mysql', component: require('@/components/workflow/steps/Mysql').default },
+        { path: 'gen-code', component: require('@/components/workflow/steps/GenCode').default }
+      ]
     },
     {
       path: '*',
