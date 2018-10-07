@@ -8,7 +8,10 @@
                 <el-button icon="el-icon-arrow-up"></el-button>
                 <el-button icon="el-icon-arrow-down"></el-button>
             </el-button-group>
-            <el-button icon="el-icon-check" style="float: right" type="primary"></el-button>
+            <el-button-group style="float: right">
+                <el-button icon="el-icon-caret-right" type="primary"></el-button>
+                <el-button icon="el-icon-check" type="primary"></el-button>
+            </el-button-group>
         </div>
         <div v-for="step in data.steps" style="margin-top: 3px">
             <el-button style="width: 100%" @click="itemClick(step)">{{step.name}}</el-button>

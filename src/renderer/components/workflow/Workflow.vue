@@ -87,6 +87,7 @@
         // 测试用: 展示static下文件
         // let files = fs.readdirSync('static/workflows', 'utf-8')
         let files = fs.readdirSync(this.$store.state.AppInfo.workflowsDir, 'utf-8')
+        _.pull(files, '.DS_Store')
         this.treebarData = _.map(files, (x, i) => { return {id: i, label: x} })
       },
       deleteFile () {

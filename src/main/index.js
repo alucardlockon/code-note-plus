@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, BrowserWindow, TouchBar } from 'electron'
+import { app, BrowserWindow, TouchBar, systemPreferences } from 'electron'
 import fs from 'fs'
 import path from 'path'
 
@@ -24,7 +24,9 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     height: 650,
     useContentSize: true,
-    width: 1300
+    width: 1300,
+    backgroundColor: systemPreferences.isDarkMode() ? '#323232' : '#eeeeee',
+    titleBarStyle: 'hiddenInset'
   })
 
   mainWindow.loadURL(winURL)
@@ -92,6 +94,10 @@ app.on('ready', () => {
   ])
 
   mainWindow.setTouchBar(touchBar)
+
+  // 判断系统是否darkmode(mac)
+  if (systemPreferences.isDarkMode()) {
+  }
 })
 
 function fsExistsSync (path) {

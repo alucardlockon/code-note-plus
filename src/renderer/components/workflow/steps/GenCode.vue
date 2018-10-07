@@ -1,5 +1,5 @@
 <template>
-    
+    <div>gen-code</div>
 </template>
 
 <script>

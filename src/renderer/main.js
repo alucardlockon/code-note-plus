@@ -9,6 +9,9 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import JsonTreeView from 'vue-json-tree-view'
 
+import './theme/element-variables-dark.scss'
+// import './theme/element-variables.scss'
+
 Vue.use(ElementUI)
 Vue.use(JsonTreeView)
 
