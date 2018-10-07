@@ -10,7 +10,7 @@
             </el-button-group>
             <el-button-group style="float: right">
                 <el-button icon="el-icon-caret-right" type="primary"></el-button>
-                <el-button icon="el-icon-check" type="primary"></el-button>
+                <el-button icon="el-icon-check" type="primary" @click="fileSave"></el-button>
             </el-button-group>
         </div>
         <div v-for="step in data.steps" style="margin-top: 3px">
@@ -38,8 +38,11 @@
     methods: {
       itemClick: function (step) {
         this.selection = step
-        this.$router.push('/' + step.type)
+        // this.$router.push({name: 'step-' + step.type, params: {config: {host: '127.0.0.1'}}})
         this.$emit('item-click', step)
+      },
+      fileSave: function () {
+        this.$emit('fileSave')
       }
     }
   }

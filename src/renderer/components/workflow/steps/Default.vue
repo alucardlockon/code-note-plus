@@ -4,7 +4,7 @@
 
 <script>
   export default {
-    name: 'wf-default'
+    name: 'step-default'
   }
 </script>
 

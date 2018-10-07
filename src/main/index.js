@@ -26,7 +26,9 @@ function createWindow () {
     useContentSize: true,
     width: 1300,
     backgroundColor: systemPreferences.isDarkMode() ? '#323232' : '#eeeeee',
-    titleBarStyle: 'hiddenInset'
+    titleBarStyle: 'hiddenInset',
+    frame: false,
+    resizable: false
   })
 
   mainWindow.loadURL(winURL)

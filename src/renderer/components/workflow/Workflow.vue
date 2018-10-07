@@ -25,12 +25,12 @@
             </div>
         </el-aside>
         <el-main>
-            <workflow-view :data="fileContent" ref="workflowview" @item-click="viewItemClick"></workflow-view>
+            <workflow-view :data="fileContent" ref="workflowview" @item-click="viewItemClick" @fileSave="fileSave"></workflow-view>
         </el-main>
-        <el-aside width="200px">
+        <el-aside width="200px" style="height: 470px;overflow-y: auto">
             <el-collapse v-model="activeNames">
                 <el-collapse-item title="文件属性" name="1">
-                    <tree-view :data="fileContent" :options="{maxDepth: 3,modifiable: true}"></tree-view>
+                    <tree-view :data="fileContent" :options="{maxDepth: 3,modifiable: false}"></tree-view>
                 </el-collapse-item>
                 <el-collapse-item title="基本属性" name="2">
                     <el-form>
@@ -43,7 +43,9 @@
                     </el-form>
                 </el-collapse-item>
                 <el-collapse-item title="步骤参数" name="3">
-                    <router-view></router-view>
+                    <step-mysql v-if="selection.type==='mysql'" :params="selection.params"></step-mysql>
+                    <step-gen-code v-else-if="selection.type==='gen-code'" :params="selection.params"></step-gen-code>
+                    <step-default v-else></step-default>
                 </el-collapse-item>
             </el-collapse>
         </el-aside>
@@ -54,17 +56,21 @@
   import fs from 'fs'
   import _ from 'lodash'
   import workflowView from './WorkflowView'
+  import StepMysql from './steps/Mysql'
+  import StepDefault from './steps/Default'
+  import StepGenCode from './steps/GenCode'
   export default {
     name: 'workflow',
-    components: {workflowView},
+    components: {StepGenCode, StepDefault, StepMysql, workflowView},
     data () {
       return {
         fileContent: {},
         filterText: '',
         treebarData: [],
         treeSel: '',
-        activeNames: ['2', '3'],
-        selection: {}
+        activeNames: ['3'],
+        selection: {},
+        file: {}
       }
     },
     created () {
@@ -78,6 +84,7 @@
       nodeClick (obj, node, tree) {
         fs.readFile(this.$store.state.AppInfo.workflowsDir + '/' + obj.label, 'utf-8', (x, data) => {
           this.fileContent = JSON.parse(data)
+          this.file.name = obj.label
         })
       },
       openFolder () {
@@ -101,6 +108,16 @@
       },
       viewItemClick (step) {
         this.selection = step
+      },
+      fileSave () {
+        if (!this.file.name) {
+          this.$message.error('没有选择文件')
+          return
+        }
+        fs.writeFile(this.$store.state.AppInfo.workflowsDir + '/' + this.file.name, JSON.stringify(this.fileContent),
+          'utf-8', (x) => {
+            this.$message.success('成功保存')
+          })
       }
     },
     watch: {
