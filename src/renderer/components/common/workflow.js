@@ -29,17 +29,19 @@ function runGenCode (step, preResult, allResult) {
     let template = step.params.template
     let parts = template.split('@@')
     let index = 0
-    let result = 'let result =``````;'
+    let result = 'let result =``;\n'
+    result += 'let preResult = JSON.parse(`' + JSON.stringify(preResult) + '`);'
     for (const part of parts) {
       if (index % 2 === 0) {
-        result += 'result+=```' + part + '```;'
+        result += 'result+=`' + part + '`;'
       } else {
         if (part.indexOf('{') === 0 && part.indexOf('}') === part.length - 1) {
-          result += part.slice(1, -1)
+          result += 'result+=' + part.slice(1, -1) + ';'
         } else {
           result += part
         }
       }
+      result += '\n'
       index++
     }
     console.log(result)
