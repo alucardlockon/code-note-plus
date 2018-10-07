@@ -25,7 +25,8 @@
             </div>
         </el-aside>
         <el-main>
-            <workflow-view :data="fileContent" ref="workflowview" @item-click="viewItemClick" @fileSave="fileSave"></workflow-view>
+            <workflow-view :data="fileContent" ref="workflowview" @item-click="viewItemClick" @fileSave="fileSave"
+            @run="run"></workflow-view>
         </el-main>
         <el-aside width="200px" style="height: 470px;overflow-y: auto">
             <el-collapse v-model="activeNames">
@@ -59,6 +60,7 @@
   import StepMysql from './steps/Mysql'
   import StepDefault from './steps/Default'
   import StepGenCode from './steps/GenCode'
+  import {run} from '../common/workflow'
   export default {
     name: 'workflow',
     components: {StepGenCode, StepDefault, StepMysql, workflowView},
@@ -85,6 +87,7 @@
         fs.readFile(this.$store.state.AppInfo.workflowsDir + '/' + obj.label, 'utf-8', (x, data) => {
           this.fileContent = JSON.parse(data)
           this.file.name = obj.label
+          this.selection = {}
         })
       },
       openFolder () {
@@ -118,6 +121,9 @@
           'utf-8', (x) => {
             this.$message.success('成功保存')
           })
+      },
+      run () {
+        run(this.fileContent)
       }
     },
     watch: {

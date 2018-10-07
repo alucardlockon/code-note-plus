@@ -9,7 +9,7 @@
                 <el-button icon="el-icon-arrow-down"></el-button>
             </el-button-group>
             <el-button-group style="float: right">
-                <el-button icon="el-icon-caret-right" type="primary"></el-button>
+                <el-button icon="el-icon-caret-right" type="primary" @click="$emit('run')"></el-button>
                 <el-button icon="el-icon-check" type="primary" @click="fileSave"></el-button>
             </el-button-group>
         </div>

@@ -54,6 +54,7 @@
             return
           }
           this.$message.success('共查询到' + result.length + '条数据')
+          console.log(result, fields)
         })
       }
     }
