@@ -2,11 +2,10 @@
     <div>
         <div>
             <el-button-group>
-                <el-button icon="el-icon-plus"></el-button>
-                <el-button icon="el-icon-edit"></el-button>
-                <el-button icon="el-icon-delete"></el-button>
-                <el-button icon="el-icon-arrow-up"></el-button>
-                <el-button icon="el-icon-arrow-down"></el-button>
+                <el-button icon="el-icon-plus" @click="$emit('item-add')"></el-button>
+                <el-button icon="el-icon-delete" @click="$emit('item-delete')"></el-button>
+                <el-button icon="el-icon-arrow-up" @click="$emit('item-move-up')"></el-button>
+                <el-button icon="el-icon-arrow-down" @click="$emit('item-move-down')"></el-button>
             </el-button-group>
             <el-button-group style="float: right">
                 <el-button icon="el-icon-caret-right" type="primary" @click="$emit('run')"></el-button>

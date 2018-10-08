@@ -1,8 +1,9 @@
 <template>
     <el-container>
-        <el-aside width="200px">
+        <el-aside width="230px">
             <el-row>
                 <el-button-group>
+                    <el-button icon="el-icon-plus" title="新建" @click="addNew"></el-button>
                     <el-button icon="el-icon-refresh" title="刷新" @click="loadFolder"></el-button>
                     <el-button icon="el-icon-document" title="打开文件夹" @click="openFolder"></el-button>
                     <el-button type="danger" icon="el-icon-delete" title="删除" @click="deleteFile"></el-button>
@@ -26,9 +27,10 @@
         </el-aside>
         <el-main>
             <workflow-view :data="fileContent" ref="workflowview" @item-click="viewItemClick" @fileSave="fileSave"
-            @run="run"></workflow-view>
+            @run="run" @item-add="itemAdd" @item-delete="itemDelete" @item-move-up="itemMoveUp" @item-move-down="itemMoveDown"></workflow-view>
         </el-main>
-        <el-aside width="200px" style="height: 470px;overflow-y: auto">
+        <el-aside width="230px" style="height: 470px;overflow-y: auto">
+            <el-input v-model="fileContent.name"></el-input>
             <el-collapse v-model="activeNames">
                 <el-collapse-item title="文件属性" name="1">
                     <tree-view :data="fileContent" :options="{maxDepth: 3,modifiable: false}"></tree-view>
@@ -124,6 +126,49 @@
       },
       run () {
         run(this.fileContent)
+      },
+      addNew () {
+        this.$prompt('请输入文件名(无需后缀名,已存在文件会覆盖)', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        }).then(({ value }) => {
+          fs.writeFile(this.$store.state.AppInfo.workflowsDir + '/' + value + '.json', JSON.stringify({}),
+            'utf-8', (x) => {
+              this.$message.success('新建成功')
+              this.loadFolder()
+            })
+        }).catch(() => {
+        })
+      },
+      itemAdd () {
+        if (!_.isArray(this.fileContent.steps)) {
+          // this.fileContent.steps = []
+          this.$set(this.fileContent, 'steps', [])
+        }
+        this.fileContent.steps.push({name: '步骤'})
+        console.log(this.fileContent)
+      },
+      itemDelete () {
+        _.pull(this.fileContent.steps, this.selection)
+        this.fileContent.steps = JSON.parse(JSON.stringify(this.fileContent.steps))
+      },
+      itemMoveUp () {
+        let index = _.findIndex(this.fileContent.steps, this.selection)
+        if (index !== -1 && index - 1 >= 0) {
+          const temp = this.fileContent.steps[index]
+          this.fileContent.steps[index] = this.fileContent.steps[--index]
+          this.fileContent.steps[index] = temp
+          this.fileContent.steps = JSON.parse(JSON.stringify(this.fileContent.steps))
+        }
+      },
+      itemMoveDown () {
+        let index = _.findIndex(this.fileContent.steps, this.selection)
+        if (index !== -1 && index + 1 < this.fileContent.steps.length) {
+          const temp = this.fileContent.steps[index]
+          this.fileContent.steps[index] = this.fileContent.steps[++index]
+          this.fileContent.steps[index] = temp
+          this.fileContent.steps = JSON.parse(JSON.stringify(this.fileContent.steps))
+        }
       }
     },
     watch: {
