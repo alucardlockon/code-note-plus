@@ -10,6 +10,10 @@ export async function run (content) {
       preResult = await runMysql(step, preResult, allResult)
     } else if (step.type === 'gen-code') {
       preResult = await runGenCode(step, preResult, allResult)
+    } else if (step.type === 'javascript') {
+      preResult = await runJavascript(step, preResult, allResult)
+    } else if (step.type === 'variable') {
+      preResult = await runVariable(step, preResult, allResult)
     }
     allResult.push({stepCount: stepCount++, result: preResult})
   }
@@ -47,5 +51,23 @@ function runGenCode (step, preResult, allResult) {
     console.log(result)
     // eslint-disable-next-line no-eval
     resolve({result: eval(result)})
+  })
+}
+
+function runJavascript (step, preResult, allResult) {
+  return new Promise(resolve => {
+    let result = 'let result =``;\n'
+    result += 'let preResult = JSON.parse(`' + JSON.stringify(preResult) + '`);'
+    result += step.params.code
+    // eslint-disable-next-line no-eval
+    resolve({result: eval(result)})
+  })
+}
+
+function runVariable (step, preResult, allResult) {
+  return new Promise(resolve => {
+    let result = {}
+    result[step.params.name] = step.params.value
+    resolve(result)
   })
 }

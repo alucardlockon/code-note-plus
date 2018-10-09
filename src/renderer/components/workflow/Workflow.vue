@@ -29,7 +29,7 @@
             <workflow-view :data="fileContent" ref="workflowview" @item-click="viewItemClick" @fileSave="fileSave"
             @run="run" @item-add="itemAdd" @item-delete="itemDelete" @item-move-up="itemMoveUp" @item-move-down="itemMoveDown"></workflow-view>
         </el-main>
-        <el-aside width="230px" style="height: 470px;overflow-y: auto">
+        <el-aside width="250px" style="height: 470px;overflow-y: auto;overflow-x: hidden">
             <el-input v-model="fileContent.name"></el-input>
             <el-collapse v-model="activeNames">
                 <el-collapse-item title="文件属性" name="1">
@@ -41,13 +41,22 @@
                             <el-input v-model="selection.name"></el-input>
                         </el-form-item>
                         <el-form-item label="类型">
-                            <el-input v-model="selection.type"></el-input>
+                            <el-select v-model="selection.type">
+                                <el-option
+                                        v-for="item in typeOptions"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
                         </el-form-item>
                     </el-form>
                 </el-collapse-item>
                 <el-collapse-item title="步骤参数" name="3">
                     <step-mysql v-if="selection.type==='mysql'" :params="selection.params"></step-mysql>
                     <step-gen-code v-else-if="selection.type==='gen-code'" :params="selection.params"></step-gen-code>
+                    <step-javascript v-else-if="selection.type==='javascript'" :params="selection.params"></step-javascript>
+                    <step-variable v-else-if="selection.type==='variable'" :params="selection.params"></step-variable>
                     <step-default v-else></step-default>
                 </el-collapse-item>
             </el-collapse>
@@ -63,9 +72,11 @@
   import StepDefault from './steps/Default'
   import StepGenCode from './steps/GenCode'
   import {run} from '../common/workflow'
+  import StepJavascript from './steps/Javascript'
+  import StepVariable from './steps/Variable'
   export default {
     name: 'workflow',
-    components: {StepGenCode, StepDefault, StepMysql, workflowView},
+    components: {StepVariable, StepJavascript, StepGenCode, StepDefault, StepMysql, workflowView},
     data () {
       return {
         fileContent: {},
@@ -74,7 +85,13 @@
         treeSel: '',
         activeNames: ['3'],
         selection: {},
-        file: {}
+        file: {},
+        typeOptions: [
+          { value: 'mysql', label: 'mysql连接' },
+          { value: 'gen-code', label: '生成代码' },
+          { value: 'javascript', label: '运行javascript' },
+          { value: 'variable', label: '定义变量' }
+        ]
       }
     },
     created () {
@@ -145,7 +162,7 @@
           // this.fileContent.steps = []
           this.$set(this.fileContent, 'steps', [])
         }
-        this.fileContent.steps.push({name: '步骤'})
+        this.fileContent.steps.push({name: '步骤', params: {}})
         console.log(this.fileContent)
       },
       itemDelete () {
