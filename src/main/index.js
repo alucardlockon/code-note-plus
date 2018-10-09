@@ -28,7 +28,8 @@ function createWindow () {
     backgroundColor: systemPreferences.isDarkMode() ? '#323232' : '#eeeeee',
     titleBarStyle: 'hiddenInset',
     frame: false,
-    resizable: false
+    resizable: false,
+    webPreferences: {webSecurity: false}
   })
 
   mainWindow.loadURL(winURL)

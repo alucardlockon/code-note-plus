@@ -29,9 +29,9 @@
             <workflow-view :data="fileContent" ref="workflowview" @item-click="viewItemClick" @fileSave="fileSave"
             @run="run" @item-add="itemAdd" @item-delete="itemDelete" @item-move-up="itemMoveUp" @item-move-down="itemMoveDown"></workflow-view>
         </el-main>
-        <el-aside width="250px" style="height: 470px;overflow-y: auto;overflow-x: hidden">
+        <el-aside width="250px" style="height: 470px;">
             <el-input v-model="fileContent.name"></el-input>
-            <el-collapse v-model="activeNames">
+            <el-collapse v-model="activeNames" style="height: 420px;overflow-y: auto;overflow-x:hidden">
                 <el-collapse-item title="文件属性" name="1">
                     <tree-view :data="fileContent" :options="{maxDepth: 3,modifiable: false}"></tree-view>
                 </el-collapse-item>
@@ -57,6 +57,7 @@
                     <step-gen-code v-else-if="selection.type==='gen-code'" :params="selection.params"></step-gen-code>
                     <step-javascript v-else-if="selection.type==='javascript'" :params="selection.params"></step-javascript>
                     <step-variable v-else-if="selection.type==='variable'" :params="selection.params"></step-variable>
+                    <step-request v-else-if="selection.type==='request'" :params="selection.params"></step-request>
                     <step-default v-else></step-default>
                 </el-collapse-item>
             </el-collapse>
@@ -74,9 +75,10 @@
   import {run} from '../common/workflow'
   import StepJavascript from './steps/Javascript'
   import StepVariable from './steps/Variable'
+  import StepRequest from './steps/Request'
   export default {
     name: 'workflow',
-    components: {StepVariable, StepJavascript, StepGenCode, StepDefault, StepMysql, workflowView},
+    components: {StepRequest, StepVariable, StepJavascript, StepGenCode, StepDefault, StepMysql, workflowView},
     data () {
       return {
         fileContent: {},
@@ -90,7 +92,8 @@
           { value: 'mysql', label: 'mysql连接' },
           { value: 'gen-code', label: '生成代码' },
           { value: 'javascript', label: '运行javascript' },
-          { value: 'variable', label: '定义变量' }
+          { value: 'variable', label: '定义变量' },
+          { value: 'request', label: '发送请求' }
         ]
       }
     },
@@ -141,8 +144,10 @@
             this.$message.success('成功保存')
           })
       },
-      run () {
-        run(this.fileContent)
+      async run () {
+        const allResult = await run(this.fileContent)
+        const result = _.last(allResult).result
+        this.$message.success(JSON.stringify(result))
       },
       addNew () {
         this.$prompt('请输入文件名(无需后缀名,已存在文件会覆盖)', '提示', {

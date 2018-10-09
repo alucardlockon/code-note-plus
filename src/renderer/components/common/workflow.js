@@ -1,4 +1,5 @@
 import {query as mysqlQuery} from './mysql'
+import {request as requestRequest} from './request'
 
 export async function run (content) {
   if (!content || content.steps.length === 0) return false
@@ -14,10 +15,13 @@ export async function run (content) {
       preResult = await runJavascript(step, preResult, allResult)
     } else if (step.type === 'variable') {
       preResult = await runVariable(step, preResult, allResult)
+    } else if (step.type === 'request') {
+      preResult = await runRequest(step, preResult, allResult)
     }
     allResult.push({stepCount: stepCount++, result: preResult})
   }
   console.log(stepCount, allResult)
+  return allResult
 }
 
 function runMysql (step, preResult, allResult) {
@@ -50,7 +54,7 @@ function runGenCode (step, preResult, allResult) {
     }
     console.log(result)
     // eslint-disable-next-line no-eval
-    resolve({result: eval(result)})
+    resolve(eval(result))
   })
 }
 
@@ -59,8 +63,9 @@ function runJavascript (step, preResult, allResult) {
     let result = 'let result =``;\n'
     result += 'let preResult = JSON.parse(`' + JSON.stringify(preResult) + '`);'
     result += step.params.code
+    console.log(result)
     // eslint-disable-next-line no-eval
-    resolve({result: eval(result)})
+    resolve(eval(result))
   })
 }
 
@@ -69,5 +74,14 @@ function runVariable (step, preResult, allResult) {
     let result = {}
     result[step.params.name] = step.params.value
     resolve(result)
+  })
+}
+
+function runRequest (step, preResult, allResult) {
+  return new Promise(resolve => {
+    let param = JSON.parse('{' + step.params.param + '}')
+    requestRequest(step.params.url, step.params.method, param).then(r => {
+      resolve(r.data)
+    })
   })
 }
