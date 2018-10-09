@@ -1,5 +1,6 @@
 import {query as mysqlQuery} from './mysql'
 import {request as requestRequest} from './request'
+import _ from 'lodash'
 
 export async function run (content) {
   if (!content || content.steps.length === 0) return false
@@ -20,7 +21,7 @@ export async function run (content) {
     }
     allResult.push({stepCount: stepCount++, result: preResult})
   }
-  console.log(stepCount, allResult)
+  console.log('results:', stepCount, allResult)
   return allResult
 }
 
@@ -52,7 +53,7 @@ function runGenCode (step, preResult, allResult) {
       result += '\n'
       index++
     }
-    console.log(result)
+    // console.log(result)
     // eslint-disable-next-line no-eval
     resolve(eval(result))
   })
@@ -63,7 +64,7 @@ function runJavascript (step, preResult, allResult) {
     let result = 'let result =``;\n'
     result += 'let preResult = JSON.parse(`' + JSON.stringify(preResult) + '`);'
     result += step.params.code
-    console.log(result)
+    // console.log(result)
     // eslint-disable-next-line no-eval
     resolve(eval(result))
   })
@@ -78,10 +79,50 @@ function runVariable (step, preResult, allResult) {
 }
 
 function runRequest (step, preResult, allResult) {
-  return new Promise(resolve => {
-    let param = JSON.parse('{' + step.params.param + '}')
-    requestRequest(step.params.url, step.params.method, param).then(r => {
-      resolve(r.data)
-    })
+  return new Promise(async resolve => {
+    let parts = step.params.param.split('@@')
+    let requestsParams = []
+    let results = []
+    requestsParams.push('{')
+    const self = {
+      step: step,
+      preResult: preResult,
+      allResult: allResult
+    }
+    for (let i = 0; i < requestsParams.length; i++) {
+      let index = 0
+      for (const part of parts) {
+        if (index % 2 === 0) {
+          requestsParams[i] += part
+        } else {
+          if (part.indexOf('{') === 0 && part.indexOf('}') === part.length - 1) {
+            let par = self[part.slice(1, -1)]
+            if (_.isArray(par)) {
+              if (requestsParams.length < par.length) {
+                for (let j = 0; j < par.length - requestsParams.length; j++) {
+                  requestsParams.push('{')
+                }
+              }
+              requestsParams[i] += par[i]
+            } else {
+              requestsParams[i] += par
+            }
+          } else {
+            requestsParams[i] += part
+          }
+        }
+        index++
+      }
+    }
+    requestsParams = _.map(requestsParams, x => x + '}')
+    for (const req of requestsParams) {
+      results.push(await new Promise(resolve => {
+        requestRequest(step.params.url, step.params.method, JSON.parse(req)).then(r => {
+          resolve(r.data)
+        })
+      }))
+    }
+    // console.log(results)
+    resolve({results: results})
   })
 }

@@ -62,6 +62,20 @@
                 </el-collapse-item>
             </el-collapse>
         </el-aside>
+        <el-dialog
+                title="运行结果"
+                :visible.sync="dialogVisible"
+                width="30%"
+                :before-close="handleClose">
+            <div style="height: 200px">
+                <tree-view :data="runResult" :options="{maxDepth: 3,modifiable: false}"></tree-view>
+            </div>
+            {{runResult.result}}
+            <span slot="footer" class="dialog-footer">
+            <el-button @click="dialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+          </span>
+        </el-dialog>
     </el-container>
 </template>
 
@@ -94,7 +108,9 @@
           { value: 'javascript', label: '运行javascript' },
           { value: 'variable', label: '定义变量' },
           { value: 'request', label: '发送请求' }
-        ]
+        ],
+        dialogVisible: false,
+        runResult: ''
       }
     },
     created () {
@@ -146,8 +162,8 @@
       },
       async run () {
         const allResult = await run(this.fileContent)
-        const result = _.last(allResult).result
-        this.$message.success(JSON.stringify(result))
+        this.runResult = _.last(allResult)
+        this.dialogVisible = true
       },
       addNew () {
         this.$prompt('请输入文件名(无需后缀名,已存在文件会覆盖)', '提示', {
@@ -191,6 +207,13 @@
           this.fileContent.steps[index] = temp
           this.fileContent.steps = JSON.parse(JSON.stringify(this.fileContent.steps))
         }
+      },
+      handleClose (done) {
+        this.$confirm('确认关闭？')
+          .then(_ => {
+            done()
+          })
+          .catch(_ => {})
       }
     },
     watch: {
