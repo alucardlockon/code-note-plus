@@ -70,7 +70,8 @@
             <div style="height: 200px">
                 <tree-view :data="runResult" :options="{maxDepth: 3,modifiable: false}"></tree-view>
             </div>
-            {{runResult.result}}
+            <div style="" v-html="runResult.result">
+            </div>
             <span slot="footer" class="dialog-footer">
             <el-button @click="dialogVisible = false">取 消</el-button>
             <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
