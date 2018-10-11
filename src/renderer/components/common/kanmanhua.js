@@ -47,6 +47,7 @@ export async function download (manga, folder) {
               console.log('下载完毕')
             })
           })
+          instance.exit()
           // console.log(content)
         })
       }
