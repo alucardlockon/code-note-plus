@@ -1,7 +1,8 @@
 <template>
     <div>
         <div>
-         看漫画APP，仅供学习参考使用!
+         看漫画APP，仅供学习参考使用! <br/>
+            <img :src="src" v-show="this.src!==''" width="250px" height="400px">
         </div>
         <el-row>
             <el-col :span="8" v-for="manga in mangaList" :key="manga.url" style="height:260px">
@@ -25,7 +26,8 @@
     name: 'app-kanmanhua',
     data () {
       return {
-        mangaList: []
+        mangaList: [],
+        src: ''
       }
     },
     async created () {
@@ -40,7 +42,10 @@
         this.mangaList = await getMangaList()
       },
       async download (manga) {
-        await download(manga, this.$store.state.AppInfo.userDataDir + '/webapp')
+        const b = await download(manga, this.$store.state.AppInfo.userDataDir + '/webapp')
+        console.log(b)
+        const head = 'data:image/jpeg;base64,'
+        this.src = head + b
       }
     }
   }

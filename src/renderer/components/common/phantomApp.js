@@ -1,7 +1,7 @@
 // import cheerio from 'cheerio'
 // import _ from 'lodash'
 const phantom = require('phantom')
-const userAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36`
+const userAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36`
 const viewPortSize = {
   width: 1920,
   height: 1080
@@ -28,6 +28,14 @@ function renderBase64 () {
   return page.renderBase64('JPEG')
 }
 
+function renderFile (path) {
+  return page.render(path, 'JPEG')
+}
+
+function exec (func) {
+  return page.evaluate(func)
+}
+
 function execCode (str) {
   return page.evaluateJavaScript(str)
 }
@@ -42,4 +50,4 @@ function delay (second) {
   })
 }
 
-export default {init, exit, open, renderBase64, execCode, getPage, delay}
+export default {init, exit, open, renderBase64, renderFile, exec, execCode, getPage, delay}
