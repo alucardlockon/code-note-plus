@@ -2,7 +2,7 @@
     <div>
         <div>
          看漫画APP，仅供学习参考使用! <br/>
-            <img :src="src" v-show="this.src!==''" width="250px" height="400px">
+            <img :src="src" v-show="this.src!==''" width="125px" height="200px">
         </div>
         <el-row>
             <el-col :span="8" v-for="manga in mangaList" :key="manga.url" style="height:260px">
@@ -43,9 +43,10 @@
       },
       async download (manga) {
         const b = await download(manga, this.$store.state.AppInfo.userDataDir + '/webapp')
-        console.log(b)
         const head = 'data:image/jpeg;base64,'
-        this.src = head + b
+        if (b.length > 0) {
+          this.src = head + b[0]
+        }
       }
     }
   }

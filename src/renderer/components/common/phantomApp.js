@@ -10,7 +10,7 @@ let instance = null
 let page = null
 
 async function init () {
-  instance = await phantom.create()
+  instance = await phantom.create(['--disk-cache=true'])
   page = await instance.createPage()
   await page.setting('userAgent', userAgent)
   await page.property('viewportSize', viewPortSize)

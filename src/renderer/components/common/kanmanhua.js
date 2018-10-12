@@ -39,81 +39,60 @@ export async function download (manga, folder) {
         if (res.data) {
           const $ = cheerio.load(res.data)
           const rawList = $('.chapter-list ul li a')
-          result = _.map(rawList, async x => {
-            /*
-              phantom.getPage().on('onResourceReceived', async response => {
-                if (response && response.contentType && response.contentType.indexOf('image/jpeg') >= 0) {
-                  await phantom.open(response.url)
-                  await phantom.delay(10)
-                  // console.log(await phantom.getPage().property('content'))
-                  resolve(phantom.renderBase64())
-                }
-              })
-              */
-            await phantom.open(baseUrl + x.attribs.href)
-            const img = await phantom.exec(() => {
-              var img = document.getElementById('mangaFile')
-              var getTop = function getTop (e) {
-                var offset = e.offsetTop
-                if (e.offsetParent != null) {
-                  offset += getTop(e.offsetParent)
-                }
-                return offset
-              }
-              var getLeft = function getLeft (e) {
-                var offset = e.offsetLeft
-                if (e.offsetParent != null) {
-                  offset += getLeft(e.offsetParent)
-                }
-                return offset
-              }
-              img.trueTop = getTop(img)
-              img.trueLeft = getLeft(img)
-              return img
-            })
-            phantom.getPage().property('clipRect', {
-              top: img.trueTop,
-              left: img.trueLeft,
-              width: img.width,
-              height: img.height
-            })
-            phantom.renderFile(folder + '/' + (page++) + '.jpg')
-            return phantom.renderBase64()
-            // await phantom.delay(10)
-            /*
-              const img = await phantom.exec(() => {
-                var img = document.getElementById('mangaFile')
-                var canvas = document.createElement('canvas')
-                canvas.width = img.width
-                canvas.height = img.height
-                var ctx = canvas.getContext('2d')
-                ctx.drawImage(img, 0, 0, img.width, img.height)
-                var dataURL = canvas.toDataURL('image/png')
-                // return dataURL.replace("data:image/png;base64,", "")
-                return dataURL
-              })
-              console.log(img)
-              return img
-              */
-            /*
-              const content = await phantom.getPage().property('content')
-              const $2 = cheerio.load(content)
-              const rawList2 = $2('#mangaFile')
-              _.forEach(rawList2, async x => {
-              })
-              _.forEach(rawList2, x => {
-                const dlUrl = x.attribs.src.replace(/.jpg/, '.jpg.webp')
-                axios.get(dlUrl).then(res => console.log(res))
-                console.log(dlUrl)
-                downloadFile(dlUrl, folder + '/abc.jpg', () => {
-                  console.log('下载完毕')
-                })
-              })
-              */
-          })
+          let page = 1
+          if (rawList.length > 0) {
+            await downImg(page, folder, rawList, result, 54)
+          }
+          console.log(1, result)
           resolve(result)
         }
       })
+  })
+}
+
+export async function downImg (page, folder, rawList, result, totalPage) {
+  return new Promise(async resolve => {
+    if (page > totalPage) {
+      resolve(null)
+    }
+    const x = rawList[0]
+    await phantom.open(baseUrl + x.attribs.href + '#p=' + page)
+    await phantom.getPage().reload()
+    console.log(baseUrl + x.attribs.href + '#p=' + page)
+    await phantom.delay(5)
+    const img = await phantom.exec(() => {
+      var img = document.getElementById('mangaFile')
+      var getTop = function getTop (e) {
+        var offset = e.offsetTop
+        if (e.offsetParent != null) {
+          offset += getTop(e.offsetParent)
+        }
+        return offset
+      }
+      var getLeft = function getLeft (e) {
+        var offset = e.offsetLeft
+        if (e.offsetParent != null) {
+          offset += getLeft(e.offsetParent)
+        }
+        return offset
+      }
+      img.trueTop = getTop(img)
+      img.trueLeft = getLeft(img)
+      return img
+    })
+    phantom.getPage().property('clipRect', {
+      top: img.trueTop,
+      left: img.trueLeft,
+      width: img.width,
+      height: img.height
+    })
+    await phantom.renderFile(folder + '/' + (page++) + '.jpg')
+    // return phantom.renderBase64()
+    result.push(await phantom.renderBase64())
+    if (page <= totalPage) {
+      await downImg(page, folder, rawList, result, totalPage)
+    }
+    resolve(phantom.renderBase64())
   })
 }
 
