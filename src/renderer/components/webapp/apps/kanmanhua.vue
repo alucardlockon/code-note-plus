@@ -20,7 +20,7 @@
 </template>
 
 <script>
-  import { getMangaList, download } from '../../common/kanmanhua'
+  import { init, exit, getMangaList, download } from '../../common/kanmanhua'
   export default {
     name: 'app-kanmanhua',
     data () {
@@ -28,8 +28,12 @@
         mangaList: []
       }
     },
-    created () {
+    async created () {
       this.getList()
+      await init()
+    },
+    async destroyed () {
+      await exit()
     },
     methods: {
       async getList () {
