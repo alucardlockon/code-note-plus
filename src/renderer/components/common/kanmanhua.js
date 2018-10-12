@@ -52,14 +52,19 @@ export async function download (manga, folder) {
 
 export async function downImg (page, folder, rawList, result, totalPage) {
   return new Promise(async resolve => {
+    console.log(1)
     if (page > totalPage) {
       resolve(null)
     }
+    console.log(2)
     const x = rawList[0]
     await phantom.open(baseUrl + x.attribs.href + '#p=' + page)
+    console.log(3)
     await phantom.getPage().reload()
+    console.log(4)
     console.log(baseUrl + x.attribs.href + '#p=' + page)
     await phantom.delay(5)
+    console.log(5)
     const img = await phantom.exec(() => {
       var img = document.getElementById('mangaFile')
       var getTop = function getTop (e) {
@@ -80,18 +85,25 @@ export async function downImg (page, folder, rawList, result, totalPage) {
       img.trueLeft = getLeft(img)
       return img
     })
+    console.log(6)
     phantom.getPage().property('clipRect', {
       top: img.trueTop,
       left: img.trueLeft,
       width: img.width,
       height: img.height
     })
+    console.log(7)
     await phantom.renderFile(folder + '/' + (page++) + '.jpg')
+    console.log(8)
     // return phantom.renderBase64()
     result.push(await phantom.renderBase64())
+    console.log(9)
     if (page <= totalPage) {
+      console.log(10)
       await downImg(page, folder, rawList, result, totalPage)
+      console.log(11)
     }
+    console.log(12)
     resolve(phantom.renderBase64())
   })
 }

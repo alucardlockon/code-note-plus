@@ -13,6 +13,7 @@ async function init () {
   instance = await phantom.create(['--disk-cache=true'])
   page = await instance.createPage()
   await page.setting('userAgent', userAgent)
+  await page.setting('resourceTimeout', 5000)
   await page.property('viewportSize', viewPortSize)
 }
 
