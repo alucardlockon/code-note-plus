@@ -40,8 +40,14 @@ export async function download (manga, folder) {
         const rawList = $('.chapter-list ul li a')
         result = _.forEach(rawList, async x => {
           await phantom.open(baseUrl + x.attribs.href)
-          await phantom.delay(10)
+          // await phantom.delay(10)
           const content = await phantom.getPage().property('content')
+          let images = []
+          phantom.getPage().on('onResourceReceived', function (response) {
+            images.push(response)
+          })
+          phantom.delay(5)
+          console.log(images)
           const $2 = cheerio.load(content)
           const rawList2 = $2('#mangaFile')
           _.forEach(rawList2, x => {
