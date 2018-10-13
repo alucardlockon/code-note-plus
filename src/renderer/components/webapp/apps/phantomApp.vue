@@ -6,6 +6,7 @@
         <el-button type="primary" style="width: 100px" @click="renderImg">RENDER</el-button>
         <el-input type="textarea" :rows="3" v-model="code" style="width: 350px"></el-input>
         <el-button type="primary" style="width: 100px" @click="execCode">EXEC</el-button>
+        <el-button type="primary" style="width: 100px" @click="reload">RELOAD</el-button>
     </div>
 </template>
 
@@ -43,6 +44,9 @@
       execCode: async function () {
         await phantom.execCode(this.code)
         this.renderImg()
+      },
+      reload: async function () {
+        await phantom.reload()
       }
     }
   }

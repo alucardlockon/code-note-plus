@@ -25,6 +25,14 @@ async function open (url) {
   await page.open(url)
 }
 
+async function stop () {
+  await page.stop()
+}
+
+async function reload () {
+  await page.reload()
+}
+
 function renderBase64 () {
   return page.renderBase64('JPEG')
 }
@@ -51,4 +59,4 @@ function delay (second) {
   })
 }
 
-export default {init, exit, open, renderBase64, renderFile, exec, execCode, getPage, delay}
+export default {init, exit, open, stop, reload, renderBase64, renderFile, exec, execCode, getPage, delay}

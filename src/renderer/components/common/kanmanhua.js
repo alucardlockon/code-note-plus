@@ -43,7 +43,7 @@ export async function download (manga, folder) {
           if (rawList.length > 0) {
             await downImg(page, folder, rawList, result, 54)
           }
-          console.log(1, result)
+          console.log('finish all images')
           resolve(result)
         }
       })
@@ -52,19 +52,18 @@ export async function download (manga, folder) {
 
 export async function downImg (page, folder, rawList, result, totalPage) {
   return new Promise(async resolve => {
-    console.log(1)
+    console.log('start page ' + page)
     if (page > totalPage) {
       resolve(null)
     }
-    console.log(2)
     const x = rawList[0]
-    await phantom.open(baseUrl + x.attribs.href + '#p=' + page)
-    console.log(3)
+    phantom.open(baseUrl + x.attribs.href + '#p=' + page)
+    console.log('open url: ' + (baseUrl + x.attribs.href + '#p=' + page))
     await phantom.getPage().reload()
-    console.log(4)
+    console.log('reload page ' + page)
     console.log(baseUrl + x.attribs.href + '#p=' + page)
     await phantom.delay(5)
-    console.log(5)
+    console.log('resume page ' + page)
     const img = await phantom.exec(() => {
       var img = document.getElementById('mangaFile')
       var getTop = function getTop (e) {
@@ -85,25 +84,29 @@ export async function downImg (page, folder, rawList, result, totalPage) {
       img.trueLeft = getLeft(img)
       return img
     })
-    console.log(6)
+    console.log('executed script page ' + page)
+    // retry
+    if (img === null) {
+      console.log('[error]page ' + page + ' fail,retrying')
+      await downImg(page, folder, rawList, result, totalPage)
+      resolve(null)
+    }
     phantom.getPage().property('clipRect', {
       top: img.trueTop,
       left: img.trueLeft,
       width: img.width,
       height: img.height
     })
-    console.log(7)
+    console.log('begin rendering file for page ' + page)
     await phantom.renderFile(folder + '/' + (page++) + '.jpg')
-    console.log(8)
+    console.log('begin render base64 fro page ' + page)
     // return phantom.renderBase64()
     result.push(await phantom.renderBase64())
-    console.log(9)
     if (page <= totalPage) {
-      console.log(10)
+      console.log('page ' + page + 'completed')
       await downImg(page, folder, rawList, result, totalPage)
-      console.log(11)
     }
-    console.log(12)
+    console.log('page ' + page + ' end')
     resolve(phantom.renderBase64())
   })
 }
