@@ -3,6 +3,9 @@ import cheerio from 'cheerio'
 import _ from 'lodash'
 import {remote} from 'electron'
 import phantom from './phantomApp'
+import fs from 'fs'
+import archiver from 'archiver'
+import rimraf from 'rimraf'
 
 const baseUrl = 'https://www.manhuagui.com'
 
@@ -30,40 +33,45 @@ export async function getMangaList () {
   return result
 }
 
-export async function download (manga, folder) {
+export async function download (manga, chapter, folder, progress) {
+  if (!fs.existsSync(folder)) {
+    fs.mkdirSync(folder)
+  }
+  const chapterFolder = folder + '/' + chapter.name
+  if (fs.existsSync(chapterFolder)) {
+    rimraf.sync(chapterFolder)
+  }
+  fs.mkdirSync(chapterFolder)
   return new Promise(async resolve => {
-    const pageUrl = baseUrl + manga.url
     let result = []
-    await axios.get(pageUrl)
-      .then(async function (res) {
-        if (res.data) {
-          const $ = cheerio.load(res.data)
-          const rawList = $('.chapter-list ul li a')
-          let page = 1
-          if (rawList.length > 0) {
-            await downImg(page, folder, rawList, result, 54)
-          }
-          console.log('finish all images')
-          resolve(result)
-        }
-      })
+    let page = 1
+    await downImg(page, chapterFolder, chapter.url, result, chapter.pageCount, progress)
+    // to zip
+    const output = fs.createWriteStream(folder + '/' + manga.title + '_' + chapter.name + '.zip')
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Sets the compression level.
+    })
+    archive.pipe(output)
+    archive.directory(folder, false)
+    archive.finalize()
+    console.log('finish all images')
+    resolve(result)
   })
 }
 
-export async function downImg (page, folder, rawList, result, totalPage) {
+export async function downImg (page, folder, chapterUrl, result, totalPage, progress) {
   return new Promise(async resolve => {
     console.log('start page ' + page)
     if (page > totalPage) {
       resolve(null)
     }
-    const x = rawList[0]
-    phantom.open(baseUrl + x.attribs.href + '#p=' + page)
-    console.log('open url: ' + (baseUrl + x.attribs.href + '#p=' + page))
-    await phantom.getPage().reload()
-    console.log('reload page ' + page)
-    console.log(baseUrl + x.attribs.href + '#p=' + page)
-    await phantom.delay(5)
-    console.log('resume page ' + page)
+    phantom.open('about:blank')
+    await phantom.open(baseUrl + chapterUrl + '#p=' + page)
+    console.log('open url: ' + (baseUrl + chapterUrl + '#p=' + page))
+    // await phantom.getPage().reload()
+    // console.log('reload page ' + page)
+    // await phantom.delay(5)
+    // console.log('resume page ' + page)
     const img = await phantom.exec(() => {
       var img = document.getElementById('mangaFile')
       var getTop = function getTop (e) {
@@ -86,9 +94,10 @@ export async function downImg (page, folder, rawList, result, totalPage) {
     })
     console.log('executed script page ' + page)
     // retry
+    // console.log(img)
     if (img === null) {
       console.log('[error]page ' + page + ' fail,retrying')
-      await downImg(page, folder, rawList, result, totalPage)
+      await downImg(page, folder, chapterUrl, result, totalPage, progress)
       resolve(null)
     }
     phantom.getPage().property('clipRect', {
@@ -104,7 +113,8 @@ export async function downImg (page, folder, rawList, result, totalPage) {
     result.push(await phantom.renderBase64())
     if (page <= totalPage) {
       console.log('page ' + page + 'completed')
-      await downImg(page, folder, rawList, result, totalPage)
+      progress.progress++
+      await downImg(page, folder, chapterUrl, result, totalPage, progress)
     }
     console.log('page ' + page + ' end')
     resolve(phantom.renderBase64())
@@ -125,4 +135,38 @@ export function getBase64Image (img) {
   var dataURL = canvas.toDataURL('image/png')
   // return dataURL.replace("data:image/png;base64,", "")
   return dataURL
+}
+
+export async function search (query) {
+  const pageUrl = baseUrl + '/s/' + query + '.html'
+  let result = []
+  await axios.get(pageUrl)
+    .then(res => {
+      if (res.data) {
+        const $ = cheerio.load(res.data)
+        const rawList = $('.book-result ul li a[class="bcover"]')
+        result = _.map(rawList, x => {
+          return { title: x.attribs.title, url: x.attribs.href, imageUrl: x.children[0].attribs.src }
+        })
+      }
+    })
+  return result
+}
+
+export async function getChapterList (manga) {
+  return new Promise(async resolve => {
+    const pageUrl = baseUrl + manga.url
+    let result = []
+    await axios.get(pageUrl)
+      .then(async function (res) {
+        if (res.data) {
+          const $ = cheerio.load(res.data)
+          const rawList = $('.chapter-list ul li a')
+          result = _.map(rawList, x => {
+            return { name: x.attribs.title, url: x.attribs.href, pageCount: parseInt(x.firstChild.children[1].firstChild.data.slice(0, -1)) }
+          })
+          resolve(result)
+        }
+      })
+  })
 }

@@ -11,7 +11,7 @@
 </template>
 
 <script>
-  import {test} from '../../common/nightmareApp'
+  // import {test} from '../../common/nightmareApp'
   export default {
     name: 'app-nightmare-app',
     data () {
@@ -31,7 +31,7 @@
       renderImg: async function () {
       },
       openUrl: function () {
-        test(this.$store.state.AppInfo.appPath + '/webApp/script')
+        // test(this.$store.state.AppInfo.appPath + '/webApp/script')
       },
       execCode: async function () {
       },

@@ -1,3 +1,4 @@
+/*
 import Nightmare from 'nightmare'
 import {exec} from 'child_process'
 
@@ -38,3 +39,4 @@ export function test2 () {
       console.log(result)
     })
 }
+*/

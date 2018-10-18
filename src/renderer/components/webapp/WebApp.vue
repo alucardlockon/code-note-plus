@@ -32,7 +32,7 @@
                 <app-kanmanhua v-if="this.runningApp.id===1"></app-kanmanhua>
                 <app-eleme v-else-if="this.runningApp.id===2"></app-eleme>
                 <app-phantom-app v-else-if="this.runningApp.id===-1"></app-phantom-app>
-                <app-nightmare-app v-else-if="this.runningApp.id===-2"></app-nightmare-app>
+                <!--<app-nightmare-app v-else-if="this.runningApp.id===-2"></app-nightmare-app>-->
             </div>
             <span slot="footer" class="dialog-footer">
             <el-button type="primary" @click="dialogVisible = false;runningApp={}">关 闭</el-button>
@@ -56,7 +56,7 @@
         dialogVisible: false,
         apps: [
           {id: -1, name: 'phnatomApp'},
-          {id: -2, name: 'ninghtmareApp'},
+          // {id: -2, name: 'ninghtmareApp'},
           {id: 1, name: '看漫画'},
           {id: 2, name: '饿了么'}
         ],
