@@ -12,7 +12,6 @@
                 <el-tab-pane label="Web应用" name="webapp">
                     <web-app></web-app>
                 </el-tab-pane>
-                <el-tab-pane label="API文档" name="apidoc">API文档</el-tab-pane>
                 <el-tab-pane label="代码片段" name="snippets">代码片段</el-tab-pane>
                 <el-tab-pane label="设置" name="config">设置</el-tab-pane>
             </el-tabs>

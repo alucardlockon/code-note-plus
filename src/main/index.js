@@ -80,11 +80,6 @@ app.on('ready', () => {
       tabName: 'webapp'
     }),
     new TouchBarButton({
-      label: 'API文档',
-      click: changeTab,
-      tabName: 'apidoc'
-    }),
-    new TouchBarButton({
       label: '代码片段',
       click: changeTab,
       tabName: 'snippets'

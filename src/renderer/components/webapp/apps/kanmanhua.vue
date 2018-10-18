@@ -16,7 +16,7 @@
                     <div style="padding: 14px;">
                         <span>{{manga.title}}</span>
                         <div class="bottom clearfix">
-                            <el-button type="text" class="button" @click="chapter(manga)">章节</el-button>
+                            <el-button type="text" class="button" @click="chapter(manga)">全部章节</el-button>
                         </div>
                     </div>
                 </el-card>
@@ -26,6 +26,7 @@
                 :title="selectedManga.title + '章节列表'"
                 :visible.sync="dialogVisible"
                 width="30%">
+            <el-button type="text" class="button" @click="downloadAll(selectedManga)">下载全部章节</el-button>
             点击章节名下载: <br />
             <span v-for="chapter in chapterList" :key="chapter.url">
                 <el-button type="text" class="button" @click="download(selectedManga, chapter)">{{chapter.name}}({{chapter.pageCount}}p)</el-button>
@@ -42,6 +43,7 @@
 </template>
 
 <script>
+  import _ from 'lodash'
   import { init, exit, getMangaList, download, search, getChapterList } from '../../common/kanmanhua'
   // import pinyin from 'pinyin'
   export default {
@@ -92,6 +94,31 @@
         this.selectedManga = manga
         this.dialogVisible = true
         this.chapterList = await getChapterList(manga)
+      },
+      async downloadAll (manga) {
+        this.downloading = true
+        this.progress.progress = 0
+        this.progress.max = _.sumBy(this.chapterList, 'pageCount')
+        /*
+        await Promise.all(_.map(this.chapterList, chapter =>
+          new Promise(async resolve => {
+            const pageObj = await createPage()
+            const pageIndex = pageObj.index
+            await download(manga, chapter
+              , this.$store.state.AppInfo.userDataDir + '/webapp/kanmanhua/' + manga.title.replace(/\s+/g, '_')
+              , this.progress, pageIndex)
+            await closePage(pageIndex)
+            resolve()
+          })
+        ))
+        */
+        for (const chapter of this.chapterList) {
+          await download(manga, chapter
+            , this.$store.state.AppInfo.userDataDir + '/webapp/kanmanhua/' + manga.title.replace(/\s+/g, '_')
+            , this.progress)
+        }
+
+        this.downloading = false
       }
     }
   }

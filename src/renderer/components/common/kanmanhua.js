@@ -8,6 +8,7 @@ import archiver from 'archiver'
 import rimraf from 'rimraf'
 
 const baseUrl = 'https://www.manhuagui.com'
+let retryCount = 0
 
 export async function init () {
   await phantom.init()
@@ -15,6 +16,14 @@ export async function init () {
 
 export async function exit () {
   await phantom.exit()
+}
+
+export async function createPage () {
+  return phantom.createPage()
+}
+
+export async function closePage (index = 0) {
+  return phantom.closePage(index)
 }
 
 export async function getMangaList () {
@@ -44,80 +53,101 @@ export async function download (manga, chapter, folder, progress) {
   fs.mkdirSync(chapterFolder)
   return new Promise(async resolve => {
     let result = []
-    let page = 1
-    await downImg(page, chapterFolder, chapter.url, result, chapter.pageCount, progress)
+
+    await phantom.closePageAll()
+    let pageIndexs = []
+    for (let i = 0; i < 10; i++) {
+      const pageObj = await createPage()
+      const pageIndex = pageObj.index
+      pageIndexs.push(pageIndex)
+    }
+
+    let methods = []
+    for (let page = 1; page <= chapter.pageCount; page++) {
+      if (page % 10 === 1) {
+        methods = []
+        for (const pageIndex of pageIndexs) {
+          if (page + pageIndex <= chapter.pageCount) {
+            methods.push(new Promise(async resolve => {
+              await downImg(page + pageIndex, chapterFolder, chapter.url, result, chapter.pageCount, progress, pageIndex)
+              resolve()
+            }))
+          }
+        }
+        await Promise.all(methods)
+      }
+    }
     // to zip
+    if (fs.existsSync(folder + '/' + manga.title + '_' + chapter.name + '.zip')) {
+      fs.unlinkSync(folder + '/' + manga.title + '_' + chapter.name + '.zip')
+    }
     const output = fs.createWriteStream(folder + '/' + manga.title + '_' + chapter.name + '.zip')
     const archive = archiver('zip', {
       zlib: { level: 9 } // Sets the compression level.
     })
     archive.pipe(output)
-    archive.directory(folder, false)
+    archive.directory(chapterFolder, false)
     archive.finalize()
     console.log('finish all images')
     resolve(result)
   })
 }
 
-export async function downImg (page, folder, chapterUrl, result, totalPage, progress) {
+export async function downImg (page, folder, chapterUrl, result, totalPage, progress, pageIndex = 0) {
   return new Promise(async resolve => {
-    console.log('start page ' + page)
+    console.log('start page ' + page + ' page index is ' + pageIndex)
     if (page > totalPage) {
       resolve(null)
     }
-    phantom.open('about:blank')
-    await phantom.open(baseUrl + chapterUrl + '#p=' + page)
+    phantom.open('about:blank', pageIndex)
+    await phantom.open(baseUrl + chapterUrl + '#p=' + page, pageIndex)
     console.log('open url: ' + (baseUrl + chapterUrl + '#p=' + page))
-    // await phantom.getPage().reload()
-    // console.log('reload page ' + page)
-    // await phantom.delay(5)
-    // console.log('resume page ' + page)
     const img = await phantom.exec(() => {
-      var img = document.getElementById('mangaFile')
-      var getTop = function getTop (e) {
-        var offset = e.offsetTop
-        if (e.offsetParent != null) {
-          offset += getTop(e.offsetParent)
+      try {
+        const img = document.getElementById('mangaFile')
+        const getTop = function getTop (e) {
+          let offset = e.offsetTop
+          if (e.offsetParent != null) {
+            offset += getTop(e.offsetParent)
+          }
+          return offset
         }
-        return offset
-      }
-      var getLeft = function getLeft (e) {
-        var offset = e.offsetLeft
-        if (e.offsetParent != null) {
-          offset += getLeft(e.offsetParent)
+        const getLeft = function getLeft (e) {
+          let offset = e.offsetLeft
+          if (e.offsetParent != null) {
+            offset += getLeft(e.offsetParent)
+          }
+          return offset
         }
-        return offset
+        img.trueTop = getTop(img)
+        img.trueLeft = getLeft(img)
+        return img
+      } catch (e) {
+        console.log('exec code error:' + e)
+        return null
       }
-      img.trueTop = getTop(img)
-      img.trueLeft = getLeft(img)
-      return img
-    })
+    }, pageIndex)
     console.log('executed script page ' + page)
-    // retry
-    // console.log(img)
-    if (img === null) {
-      console.log('[error]page ' + page + ' fail,retrying')
-      await downImg(page, folder, chapterUrl, result, totalPage, progress)
+    if (img === null && retryCount < 5) {
+      console.log('[error]page ' + page + ' fail,retrying,retry count is ' + retryCount)
+      retryCount++
+      await downImg(page, folder, chapterUrl, result, totalPage, progress, pageIndex)
       resolve(null)
     }
-    phantom.getPage().property('clipRect', {
+    phantom.getPage(pageIndex).property('clipRect', {
       top: img.trueTop,
       left: img.trueLeft,
       width: img.width,
       height: img.height
     })
     console.log('begin rendering file for page ' + page)
-    await phantom.renderFile(folder + '/' + (page++) + '.jpg')
-    console.log('begin render base64 fro page ' + page)
-    // return phantom.renderBase64()
-    result.push(await phantom.renderBase64())
-    if (page <= totalPage) {
-      console.log('page ' + page + 'completed')
-      progress.progress++
-      await downImg(page, folder, chapterUrl, result, totalPage, progress)
-    }
-    console.log('page ' + page + ' end')
-    resolve(phantom.renderBase64())
+    await phantom.renderFile(folder + '/' + page + '.jpg', pageIndex)
+    console.log('begin render base64 for page ' + page)
+    result.push(await phantom.renderBase64(pageIndex))
+    console.log('page ' + page + ' completed, page index is ' + pageIndex)
+    progress.progress++
+    retryCount = 0
+    resolve(phantom.renderBase64(pageIndex))
   })
 }
 
