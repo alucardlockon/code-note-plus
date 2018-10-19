@@ -8,7 +8,6 @@ import archiver from 'archiver'
 import rimraf from 'rimraf'
 
 const baseUrl = 'https://www.manhuagui.com'
-let retryCount = 0
 
 export async function init () {
   await phantom.init()
@@ -69,7 +68,7 @@ export async function download (manga, chapter, folder, progress) {
         for (const pageIndex of pageIndexs) {
           if (page + pageIndex <= chapter.pageCount) {
             methods.push(new Promise(async resolve => {
-              await downImg(page + pageIndex, chapterFolder, chapter.url, result, chapter.pageCount, progress, pageIndex)
+              await downImg(page + pageIndex, chapterFolder, chapter.url, result, chapter.pageCount, progress, pageIndex, 0)
               resolve()
             }))
           }
@@ -93,15 +92,19 @@ export async function download (manga, chapter, folder, progress) {
   })
 }
 
-export async function downImg (page, folder, chapterUrl, result, totalPage, progress, pageIndex = 0) {
-  return new Promise(async resolve => {
+export async function downImg (page, folder, chapterUrl, result, totalPage, progress, pageIndex = 0, retryCount = 0) {
+  return new Promise(async (resolve, reject) => {
     console.log('start page ' + page + ' page index is ' + pageIndex)
     if (page > totalPage) {
       resolve(null)
+      return
     }
     phantom.open('about:blank', pageIndex)
     await phantom.open(baseUrl + chapterUrl + '#p=' + page, pageIndex)
-    console.log('open url: ' + (baseUrl + chapterUrl + '#p=' + page))
+    // console.log('open url: ' + (baseUrl + chapterUrl + '#p=' + page))
+    if (retryCount > 0) {
+      await phantom.delay(retryCount * 2)
+    }
     const img = await phantom.exec(() => {
       try {
         const img = document.getElementById('mangaFile')
@@ -127,24 +130,31 @@ export async function downImg (page, folder, chapterUrl, result, totalPage, prog
         return null
       }
     }, pageIndex)
-    console.log('executed script page ' + page)
-    if (img === null && retryCount < 5) {
-      console.log('[error]page ' + page + ' fail,retrying,retry count is ' + retryCount)
-      retryCount++
-      await downImg(page, folder, chapterUrl, result, totalPage, progress, pageIndex)
-      resolve(null)
+    // console.log('executed script page ' + page)
+    if (img === null || img.height <= 100 || (img.height >= 1080 && img.width === 1920) || !img.height || !img.width) {
+      if (retryCount < 5) {
+        console.log('[error]page ' + page + ' fail,retrying,retry count is ' + retryCount + ' , imgObj:', img)
+        retryCount++
+        await downImg(page, folder, chapterUrl, result, totalPage, progress, pageIndex, retryCount)
+        resolve(null)
+      } else {
+        console.error('tryed ' + retryCount + ' times, but failed')
+        reject(new Error('tryed ' + retryCount + ' times, but failed'))
+      }
+      return
     }
+    // console.log('page ' + page + ',' + img.height + ',' + img.width)
     phantom.getPage(pageIndex).property('clipRect', {
       top: img.trueTop,
       left: img.trueLeft,
       width: img.width,
       height: img.height
     })
-    console.log('begin rendering file for page ' + page)
+    // console.log('begin rendering file for page ' + page)
     await phantom.renderFile(folder + '/' + page + '.jpg', pageIndex)
-    console.log('begin render base64 for page ' + page)
+    // console.log('begin render base64 for page ' + page)
     result.push(await phantom.renderBase64(pageIndex))
-    console.log('page ' + page + ' completed, page index is ' + pageIndex)
+    // console.log('page ' + page + ' completed, page index is ' + pageIndex)
     progress.progress++
     retryCount = 0
     resolve(phantom.renderBase64(pageIndex))
