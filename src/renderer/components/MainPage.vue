@@ -9,6 +9,9 @@
                     <workflow></workflow>
                 </el-tab-pane>
                 <el-tab-pane label="笔记" name="note">笔记</el-tab-pane>
+                <el-tab-pane label="应用" name="codeApp">
+                    <code-app></code-app>
+                </el-tab-pane>
                 <el-tab-pane label="Web应用" name="webapp">
                     <web-app></web-app>
                 </el-tab-pane>
@@ -23,9 +26,10 @@
   import Workflow from './workflow/Workflow'
   import WebApp from './webapp/WebApp'
   import {ipcRenderer} from 'electron'
+  import CodeApp from './codeApp/CodeApp'
   export default {
     name: 'main-page',
-    components: {Workflow, WebApp},
+    components: {CodeApp, Workflow, WebApp},
     created () {
       ipcRenderer.on('change-tab', (event, tabName) => {
         this.activeName = tabName
