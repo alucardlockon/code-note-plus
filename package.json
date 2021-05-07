@@ -58,7 +58,7 @@
     "axios": "^0.18.1",
     "cheerio": "^1.0.0-rc.2",
     "element-ui": "^2.4.8",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "mysql": "^2.16.0",
     "nightmare": "^3.0.1",
     "phantom": "^6.0.3",
